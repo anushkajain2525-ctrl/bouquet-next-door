@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #faf5ee;
+  --paper-2: #f3ebe0;
+  --card: #fffdf9;
+  --ink: #2a1d1a;
+  --ink-soft: #6f5e57;
+  --line: #e6dccd;
+  --wine: #7a1d3b;
+  --wine-deep: #4a0f24;
+  --rose: #e8a5ab;
+  --sage: #6f8560;
+  --gold: #c58f3b;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-paper: var(--paper);
+  --color-paper2: var(--paper-2);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-wine: var(--wine);
+  --color-winedeep: var(--wine-deep);
+  --color-rose: var(--rose);
+  --color-sage: var(--sage);
+  --color-gold: var(--gold);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-fraunces);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html { color-scheme: light; scroll-behavior: smooth; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font-geist-sans), system-ui, sans-serif; }
+.font-display { font-family: var(--font-fraunces), Georgia, serif; font-variation-settings: "SOFT" 100, "WONK" 1; letter-spacing: -0.02em; }
+
+::selection { background: var(--rose); color: var(--wine-deep); }
+:focus-visible { outline: 2px solid var(--wine); outline-offset: 3px; border-radius: 6px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; border-radius: 999px; padding: .8rem 1.4rem; font-weight: 600; font-size: .95rem; transition: transform .35s var(--spring), background .2s, box-shadow .3s; cursor: pointer; }
+.btn:active { transform: scale(.96); }
+.btn-primary { background: var(--wine); color: #fff; box-shadow: 0 10px 24px -12px var(--wine); }
+.btn-primary:hover { transform: translateY(-2px); background: var(--wine-deep); }
+.btn-ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+.btn-ghost:hover { background: var(--paper-2); transform: translateY(-2px); }
+.btn:disabled { opacity: .5; pointer-events: none; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 1.5rem; }
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: .45rem .95rem; font-size: .88rem; transition: all .25s var(--spring); cursor: pointer; }
+.chip:hover { transform: translateY(-1px); border-color: var(--wine); }
+.chip[aria-pressed="true"] { background: var(--wine); color: #fff; border-color: var(--wine); }
+.chip.avoid[aria-pressed="true"] { background: #3b3330; border-color: #3b3330; text-decoration: line-through; }
+.input { width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: .9rem; padding: .8rem 1rem; font-size: 1rem; transition: border .2s, box-shadow .2s; }
+.input:focus { outline: none; border-color: var(--wine); box-shadow: 0 0 0 4px color-mix(in srgb, var(--rose) 40%, transparent); }
+.label { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .8s var(--ease) both; }
+@keyframes sway { 0%,100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
+.sway { transform-origin: 50% 100%; animation: sway 6s ease-in-out infinite; }
+@keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+.pop { animation: pop .5s var(--spring) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+html[data-intro="playing"] .bnd-logo { opacity: 0; }
+.bnd-logo { transition: opacity .3s; }
+
+@keyframes heml { 0%,100% { transform: skewX(0); } 35% { transform: skewX(5deg); } 70% { transform: skewX(-2.5deg); } }
+@keyframes hemr { 0%,100% { transform: skewX(0); } 35% { transform: skewX(-5deg); } 70% { transform: skewX(2.5deg); } }
