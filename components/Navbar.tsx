@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { usePhone } from "@/lib/phone";
 
 const links = [
+  { href: "/gallery", label: "Gallery" },
   { href: "/build", label: "Build" },
   { href: "/suggestions", label: "For her, now" },
   { href: "/orders", label: "My bouquets" },

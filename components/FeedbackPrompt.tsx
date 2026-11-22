@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, usePhone } from "@/lib/phone";
 import { flowerById, Stem } from "@/lib/catalog";
-import BouquetSVG from "./BouquetSVG";
+import BouquetPhoto from "./BouquetPhoto";
 
-interface Pending { id: string; occasion: string; stems: Stem[]; wrap: string; created_at: string }
+interface Pending { id: string; occasion: string; stems: Stem[]; wrap: string; vase?: string; created_at: string }
 
 export default function FeedbackPrompt() {
   const { phone } = usePhone();
@@ -35,7 +35,7 @@ export default function FeedbackPrompt() {
   return (
     <div role="dialog" aria-modal="true" aria-label="Bouquet feedback" className="fixed inset-0 z-50 grid place-items-center bg-winedeep/50 p-4 backdrop-blur-sm">
       <div className="card w-full max-w-md overflow-hidden p-6 pop">
-        <BouquetSVG stems={p.stems} wrap={p.wrap} className="mx-auto h-44" />
+        <BouquetPhoto stems={p.stems} wrap={p.wrap} vase={p.vase} className="mx-auto !aspect-[16/10] max-w-xs" />
         {step === "ask" && (<>
           <p className="label text-center mt-2">Last time · {p.occasion}</p>
           <h2 className="font-display text-3xl text-center mt-1">Did she like the bouquet?</h2>

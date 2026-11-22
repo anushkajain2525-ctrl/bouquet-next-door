@@ -47,3 +47,6 @@ create table if not exists bnd_orders (
 alter table bnd_profiles enable row level security;
 alter table bnd_bouquets enable row level security;
 alter table bnd_orders enable row level security;
+
+-- v2: vases
+alter table bnd_bouquets add column if not exists vase text not null default 'none';

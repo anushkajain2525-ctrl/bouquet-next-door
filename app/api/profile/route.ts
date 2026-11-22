@@ -1,8 +1,8 @@
 import { db, normPhone } from "@/lib/db";
 import { ok, bad, fail, body } from "@/lib/http";
-import { COLOR_TAGS, FLOWERS, VIBES } from "@/lib/catalog";
+import { COLOR_TAGS, FAMILIES, VIBES } from "@/lib/catalog";
 
-const ids = new Set(FLOWERS.map((f) => f.id));
+const ids = new Set(FAMILIES.map((f) => f.id));
 const pick = (v: unknown, allowed: (x: string) => boolean) =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && allowed(x)).slice(0, 20) : [];
 

@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, usePhone } from "@/lib/phone";
 import PhoneGate from "@/components/PhoneGate";
-import BouquetSVG from "@/components/BouquetSVG";
+import BouquetPhoto from "@/components/BouquetPhoto";
 import { DELIVERY_FEE, SLOTS, flowerById, Stem } from "@/lib/catalog";
 
-interface Bq { id: string; occasion: string; stems: Stem[]; wrap: string; card_message: string; total_inr: number; status: string; liked: boolean | null; created_at: string }
+interface Bq { vase?: string; id: string; occasion: string; stems: Stem[]; wrap: string; card_message: string; total_inr: number; status: string; liked: boolean | null; created_at: string }
 interface Ord { id: string; bouquet_id: string; address: string; delivery_date: string; slot: string; total_inr: number; status: string }
 
 const iso = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -68,7 +68,7 @@ function Inner() {
     <div className="mx-auto max-w-5xl px-6 pb-16 pt-12">
       <h1 className="font-display text-5xl">My bouquets</h1>
       {chosen && <div className="mt-6 grid gap-5 md:grid-cols-[1fr_1.3fr]">
-        <div className="card p-4"><BouquetSVG stems={chosen.stems} wrap={chosen.wrap} className="mx-auto h-64" /></div>
+        <div className="card p-4"><BouquetPhoto stems={chosen.stems} wrap={chosen.wrap} vase={chosen.vase} /></div>
         <OrderForm bq={chosen} phone={phone} onDone={load} />
       </div>}
       {!bqs.length && <div className="card mt-8 p-10 text-center"><p className="text-soft">No bouquets yet.</p><Link href="/build" className="btn btn-primary mt-4">Build your first</Link></div>}
@@ -77,7 +77,7 @@ function Inner() {
           const o = ords.find((x) => x.bouquet_id === b.id);
           return (
             <li key={b.id} className="card p-4">
-              <BouquetSVG stems={b.stems} wrap={b.wrap} className="mx-auto h-40" />
+              <BouquetPhoto stems={b.stems} wrap={b.wrap} vase={b.vase} className="!aspect-[16/11]" />
               <p className="mt-2 text-sm font-semibold capitalize">{b.occasion} · ₹{b.total_inr}</p>
               <p className="text-xs text-soft">{b.stems.map((s) => `${s.qty}× ${flowerById(s.id)?.name}`).join(", ")}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
