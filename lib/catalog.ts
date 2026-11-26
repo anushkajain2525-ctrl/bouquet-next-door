@@ -100,5 +100,29 @@ export function priceOf(stems: Stem[], wrapId: string, hasCard: boolean, vaseId 
   return s + (wrapById(wrapId)?.price ?? 0) + (hasCard ? CARD_PRICE : 0) + (vaseById(vaseId)?.price ?? 0);
 }
 
-export const SLOTS = ["10am – 1pm", "1pm – 4pm", "4pm – 7pm", "7pm – 9pm"];
+export const SLOTS = ["10am – 1pm", "1pm – 4pm", "4pm – 7pm", "7pm – 9pm", "11pm – 12am (midnight)"];
+// Hour (IST, 24h) each slot starts. Florists need PREP_HOURS between order and slot start.
+export const SLOT_START: Record<string, number> = { "10am – 1pm": 10, "1pm – 4pm": 13, "4pm – 7pm": 16, "7pm – 9pm": 19, "11pm – 12am (midnight)": 23 };
+export const PREP_HOURS = 3;
 export const DELIVERY_FEE = 49;
+
+// Current date (YYYY-MM-DD) and hour in India, regardless of server or browser timezone.
+export function istNow(now = new Date()) {
+  const ist = new Date(now.getTime() + 5.5 * 3600_000);
+  return { date: ist.toISOString().slice(0, 10), hour: ist.getUTCHours() + ist.getUTCMinutes() / 60 };
+}
+
+// A slot is bookable if it is on a future day, or today with enough prep time left.
+export function slotOpen(date: string, slot: string, now = new Date()) {
+  const { date: today, hour } = istNow(now);
+  if (date > today) return true;
+  if (date < today) return false;
+  return SLOT_START[slot] - hour >= PREP_HOURS;
+}
+
+// Latest same-day order time today (IST hour), or null if same-day is closed for today.
+export function sameDayCutoff(now = new Date()) {
+  const { hour } = istNow(now);
+  const open = SLOTS.map((s) => SLOT_START[s] - PREP_HOURS).filter((h) => h > hour);
+  return open.length ? Math.max(...open) : null;
+}

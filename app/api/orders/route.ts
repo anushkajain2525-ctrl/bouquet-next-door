@@ -1,6 +1,6 @@
 import { db, normPhone } from "@/lib/db";
 import { ok, bad, fail, body } from "@/lib/http";
-import { SLOTS, DELIVERY_FEE } from "@/lib/catalog";
+import { SLOTS, DELIVERY_FEE, istNow, slotOpen } from "@/lib/catalog";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -24,9 +24,10 @@ export async function POST(req: Request) {
   if (address.length < 10) return bad("Please enter a full delivery address");
   if (!/^(110|121|122|201|124)\d{3}$/.test(pincode)) return bad("We're live only in Delhi NCR. Check the pincode");
   if (!slot) return bad("Pick a delivery slot");
-  const d = new Date(date + "T00:00:00");
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  if (isNaN(+d) || d < today || +d > +today + 30 * 86400_000) return bad("Pick a delivery date within the next 30 days");
+  const today = istNow().date;
+  const maxDate = istNow(new Date(Date.now() + 30 * 86400_000)).date;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < today || date > maxDate) return bad("Pick a delivery date within the next 30 days");
+  if (!slotOpen(date, slot)) return bad("That slot is too soon for today. Pick a later slot or tomorrow");
   try {
     const bq = await db<{ total_inr: number }[]>(`bnd_bouquets?id=eq.${b.bouquet_id}&phone=eq.${phone}&select=total_inr`);
     if (!bq.length) return bad("Bouquet not found", 404);

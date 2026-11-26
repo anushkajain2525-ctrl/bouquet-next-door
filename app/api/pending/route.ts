@@ -1,17 +1,22 @@
 import { db, normPhone } from "@/lib/db";
 import { ok, bad, fail } from "@/lib/http";
+import { istNow } from "@/lib/catalog";
 
-// The bouquet we should ask about on return: most recent one she hasn't been rated on.
-// Only counts bouquets that were ordered (given), or saved more than 1 hour ago.
+// Bouquets we can ask about on a return visit: not rated yet, and if ordered, the delivery date has come.
+// The browser skips bouquets made during the current visit, so the question comes "next time".
 export async function GET(req: Request) {
   const phone = normPhone(new URL(req.url).searchParams.get("phone"));
   if (!phone) return bad("Enter a valid 10-digit mobile number");
   try {
-    const rows = await db<{ id: string; status: string; created_at: string }[]>(
-      `bnd_bouquets?phone=eq.${phone}&liked=is.null&select=*&order=created_at.desc&limit=5`,
-    );
-    const hourAgo = Date.now() - 3600_000;
-    const pending = rows.find((r) => r.status === "ordered" || new Date(r.created_at).getTime() < hourAgo) ?? null;
-    return ok({ pending });
+    const [rows, orders] = await Promise.all([
+      db<{ id: string }[]>(`bnd_bouquets?phone=eq.${phone}&liked=is.null&select=*&order=created_at.desc&limit=10`),
+      db<{ bouquet_id: string; delivery_date: string }[]>(`bnd_orders?phone=eq.${phone}&select=bouquet_id,delivery_date`),
+    ]);
+    const today = istNow().date;
+    const candidates = rows.filter((r) => {
+      const o = orders.find((x) => x.bouquet_id === r.id);
+      return !o || o.delivery_date <= today;
+    });
+    return ok({ candidates });
   } catch (e) { return fail(e); }
 }

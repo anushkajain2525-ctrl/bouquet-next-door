@@ -2,25 +2,31 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { api, usePhone } from "@/lib/phone";
+import { api, markThisVisit, usePhone } from "@/lib/phone";
 import PhoneGate from "@/components/PhoneGate";
 import BouquetPhoto from "@/components/BouquetPhoto";
-import { DELIVERY_FEE, SLOTS, flowerById, Stem } from "@/lib/catalog";
+import { DELIVERY_FEE, SLOTS, flowerById, istNow, slotOpen, PREP_HOURS, Stem } from "@/lib/catalog";
 
 interface Bq { vase?: string; id: string; occasion: string; stems: Stem[]; wrap: string; card_message: string; total_inr: number; status: string; liked: boolean | null; created_at: string }
 interface Ord { id: string; bouquet_id: string; address: string; delivery_date: string; slot: string; total_inr: number; status: string }
 
-const iso = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const firstOpen = (date: string) => SLOTS.find((s) => slotOpen(date, s)) ?? "";
+function defaultDate() {
+  const today = istNow().date;
+  return firstOpen(today) ? today : istNow(new Date(Date.now() + 86400_000)).date;
+}
 
 function OrderForm({ bq, phone, onDone }: { bq: Bq; phone: string; onDone: () => void }) {
   const [address, setAddress] = useState(""); const [pincode, setPincode] = useState("");
-  const [date, setDate] = useState(iso(new Date())); const [slot, setSlot] = useState(SLOTS[0]);
+  const [date, setDateRaw] = useState(defaultDate); const [slot, setSlot] = useState(() => firstOpen(defaultDate()));
+  const setDate = (d: string) => { setDateRaw(d); if (!slotOpen(d, slot)) setSlot(firstOpen(d)); };
   const [busy, setBusy] = useState(false); const [err, setErr] = useState(""); const [done, setDone] = useState(false);
-  const [min] = useState(() => iso(new Date()));
-  const [max] = useState(() => iso(new Date(Date.now() + 30 * 864e5)));
+  const [min] = useState(() => defaultDate());
+  const [max] = useState(() => istNow(new Date(Date.now() + 30 * 864e5)).date);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setErr("");
-    try { await api("/api/orders", { method: "POST", body: JSON.stringify({ phone, bouquet_id: bq.id, address, pincode, delivery_date: date, slot }) }); setDone(true); onDone(); }
+    if (!slot) { setBusy(false); return setErr("No slots left for that day. Pick another date"); }
+    try { await api("/api/orders", { method: "POST", body: JSON.stringify({ phone, bouquet_id: bq.id, address, pincode, delivery_date: date, slot }) }); markThisVisit(bq.id); setDone(true); onDone(); }
     catch (x) { setErr((x as Error).message); } finally { setBusy(false); }
   };
   if (done) return (
@@ -34,8 +40,9 @@ function OrderForm({ bq, phone, onDone }: { bq: Bq; phone: string; onDone: () =>
       <div className="grid gap-3 sm:grid-cols-3">
         <div><label className="label" htmlFor="pc">Pincode</label><input id="pc" className="input mt-2" inputMode="numeric" maxLength={6} required value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))} placeholder="110001" /></div>
         <div><label className="label" htmlFor="dt">Date</label><input id="dt" type="date" className="input mt-2" min={min} max={max} required value={date} onChange={(e) => setDate(e.target.value)} /></div>
-        <div><label className="label" htmlFor="sl">Slot</label><select id="sl" className="input mt-2" value={slot} onChange={(e) => setSlot(e.target.value)}>{SLOTS.map((s) => <option key={s}>{s}</option>)}</select></div>
+        <div><label className="label" htmlFor="sl">Slot</label><select id="sl" className="input mt-2" value={slot} onChange={(e) => setSlot(e.target.value)}>{SLOTS.map((s) => { const open = slotOpen(date, s); return <option key={s} value={s} disabled={!open}>{s}{open ? "" : " (closed)"}</option>; })}</select></div>
       </div>
+      <p className="text-xs text-soft">Same-day delivery needs {PREP_HOURS} hours to arrange fresh. Midnight surprises: order by 8 pm.</p>
       <p className="text-sm text-soft">Bouquet ₹{bq.total_inr} + delivery ₹{DELIVERY_FEE} = <b className="text-ink">₹{bq.total_inr + DELIVERY_FEE}</b></p>
       {err && <p role="alert" className="text-sm text-wine">{err}</p>}
       <button className="btn btn-primary w-full" disabled={busy}>{busy ? "Placing…" : "Request delivery"}</button>

@@ -7,12 +7,15 @@ import PhoneGate from "@/components/PhoneGate";
 import BouquetPhoto from "@/components/BouquetPhoto";
 import { SEASON_LABEL, flowerById, priceOf } from "@/lib/catalog";
 import { suggest, Profile, PastBouquet } from "@/lib/suggest";
+import { LoveBadge, useRatings } from "@/lib/ratings";
+import { DeliveryBanner } from "@/components/DeliveryBadge";
 
 export default function Suggestions() {
   const { phone, ready } = usePhone();
   const router = useRouter();
   const [state, setState] = useState<{ profile: Profile | null; history: PastBouquet[] } | null>(null);
   const [err, setErr] = useState("");
+  const stats = useRatings();
 
   useEffect(() => {
     if (!phone) return;
@@ -37,11 +40,13 @@ export default function Suggestions() {
       <p className="label">{SEASON_LABEL[season]} · Delhi NCR</p>
       <h1 className="font-display mt-1 text-5xl">For {state.profile.partner_name}, right now</h1>
       <ul className="mt-3 space-y-1 text-sm text-soft">{notes.map((n) => <li key={n}>· {n}</li>)}</ul>
+      <div className="mt-5"><DeliveryBanner /></div>
       <div className="mt-8 grid gap-5 sm:grid-cols-2">
         {items.map((s, i) => (
           <article key={s.title} className="card flex flex-col p-5 rise" style={{ animationDelay: `${i * 90}ms` }}>
             <BouquetPhoto stems={s.stems} wrap={s.wrap} vase={s.vase} />
             <h2 className="font-display mt-4 text-2xl">{s.title}</h2>
+            <LoveBadge stats={stats} stems={s.stems} className="mt-1 block" />
             <p className="mt-1 text-sm text-soft">{s.why}</p>
             <p className="mt-2 text-xs text-soft">{s.stems.map((x) => `${x.qty}× ${flowerById(x.id)?.name}`).join(" · ")}</p>
             <div className="mt-auto flex items-center justify-between pt-4">

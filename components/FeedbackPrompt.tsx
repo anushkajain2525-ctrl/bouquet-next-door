@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { api, usePhone } from "@/lib/phone";
+import { usePathname } from "next/navigation";
+import { api, madeThisVisit, usePhone } from "@/lib/phone";
 import { flowerById, Stem } from "@/lib/catalog";
 import BouquetPhoto from "./BouquetPhoto";
 
@@ -9,6 +10,7 @@ interface Pending { id: string; occasion: string; stems: Stem[]; wrap: string; v
 
 export default function FeedbackPrompt() {
   const { phone } = usePhone();
+  const path = usePathname();
   const [p, setP] = useState<Pending | null>(null);
   const [step, setStep] = useState<"ask" | "note" | "done">("ask");
   const [liked, setLiked] = useState<boolean | null>(null);
@@ -19,9 +21,18 @@ export default function FeedbackPrompt() {
   useEffect(() => {
     if (!phone) { setP(null); return; }
     let off = false;
-    api<{ pending: Pending | null }>(`/api/pending?phone=${phone}`).then((r) => { if (!off) { setP(r.pending); setStep("ask"); } }).catch(() => {});
+    try { if (sessionStorage.getItem("bnd-asked")) return; } catch {}
+    api<{ candidates: Pending[] }>(`/api/pending?phone=${phone}`).then((r) => {
+      if (off) return;
+      const skip = madeThisVisit();
+      const next = r.candidates.find((c) => !skip.includes(c.id)) ?? null;
+      setP(next); setStep("ask");
+    }).catch(() => {});
     return () => { off = true; };
-  }, [phone]);
+  }, [phone, path]);
+
+  // Ask at most once per visit, even if he picks "Ask me later".
+  const close = () => { try { sessionStorage.setItem("bnd-asked", "1"); } catch {} setP(null); };
 
   if (!p || !phone) return null;
   const names = p.stems.map((s) => flowerById(s.id)?.name).filter(Boolean).slice(0, 3).join(", ");
@@ -44,7 +55,7 @@ export default function FeedbackPrompt() {
             <button className="btn btn-primary" disabled={busy} onClick={() => { setLiked(true); setStep("note"); }}>She loved it</button>
             <button className="btn btn-ghost" disabled={busy} onClick={() => { setLiked(false); setStep("note"); }}>Not really</button>
           </div>
-          <button className="mt-4 w-full text-xs text-soft underline" onClick={() => setP(null)}>Ask me later</button>
+          <button className="mt-4 w-full text-xs text-soft underline" onClick={close}>Ask me later</button>
         </>)}
         {step === "note" && (<>
           <h2 className="font-display text-2xl text-center mt-2">{liked ? "Lovely! Anything she especially liked?" : "Thanks for being honest. What missed?"}</h2>
@@ -56,8 +67,8 @@ export default function FeedbackPrompt() {
           <h2 className="font-display text-3xl text-center mt-2">Noted.</h2>
           <p className="text-center text-soft text-sm mt-1">We&apos;ll tune this season&apos;s suggestions to her taste.</p>
           <div className="mt-5 grid gap-3">
-            <Link href="/suggestions" onClick={() => setP(null)} className="btn btn-primary">See new suggestions</Link>
-            <button className="btn btn-ghost" onClick={() => setP(null)}>Close</button>
+            <Link href="/suggestions" onClick={close} className="btn btn-primary">See new suggestions</Link>
+            <button className="btn btn-ghost" onClick={close}>Close</button>
           </div>
         </>)}
       </div>

@@ -1,14 +1,14 @@
 import Image from "next/image";
 import { Stem, flowerById, flowerImg, vaseById, vaseImg, wrapById } from "@/lib/catalog";
 
-// Photo-based bouquet preview: the dominant flower as the hero shot, the rest as overlapping
-// round photos with stem counts, plus the chosen vase. Every image is a real generated photograph.
+// Photo-based bouquet preview: one flower fills the frame; a mix becomes a collage of its flowers,
+// with any extras as round thumbnails, plus the chosen vase. Every image is a real generated photograph.
 export default function BouquetPhoto({ stems, wrap, vase = "none", className = "", priority = false }: {
   stems: Stem[]; wrap: string; vase?: string; className?: string; priority?: boolean;
 }) {
   const sorted = [...stems].filter((s) => flowerById(s.id) && s.qty > 0).sort((a, b) => b.qty - a.qty);
   const hero = sorted[0];
-  const rest = sorted.slice(1, 5);
+  const rest = sorted.length === 1 ? [] : sorted.slice(3, 7); // extra flowers beyond the collage tiles
   const count = sorted.reduce((n, s) => n + s.qty, 0);
   const w = wrapById(wrap);
   const v = vase !== "none" ? vaseById(vase) : null;
@@ -18,7 +18,18 @@ export default function BouquetPhoto({ stems, wrap, vase = "none", className = "
     <div className={`relative aspect-[4/5] w-full overflow-hidden rounded-[1.4rem] bg-paper2 ${className}`}>
       {hero ? (
         <>
-          <Image src={flowerImg(hero.id)} alt={flowerById(hero.id)!.name} fill sizes="(max-width: 768px) 90vw, 420px" priority={priority} className="object-cover" />
+          {sorted.length === 1 ? (
+            <Image src={flowerImg(hero.id)} alt={flowerById(hero.id)!.name} fill sizes="(max-width: 768px) 90vw, 420px" priority={priority} className="object-cover" />
+          ) : (
+            // Mixed bouquet: a collage with one tile per flower, the biggest share on the left.
+            <div className={`absolute inset-0 grid gap-0.5 ${sorted.length === 2 ? "grid-cols-2" : "grid-cols-2 grid-rows-2"}`}>
+              {sorted.slice(0, 3).map((s, i) => (
+                <div key={s.id} className={`relative overflow-hidden ${sorted.length > 2 && i === 0 ? "row-span-2" : ""}`}>
+                  <Image src={flowerImg(s.id)} alt={flowerById(s.id)!.name} fill sizes="(max-width: 768px) 50vw, 220px" priority={priority && i === 0} className="object-cover transition duration-500" />
+                </div>
+              ))}
+            </div>
+          )}
           <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute inset-x-3 bottom-3">
             <div className="mb-2 flex -space-x-2.5">

@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { api, usePhone } from "@/lib/phone";
+import { api, markThisVisit, usePhone } from "@/lib/phone";
 import PhoneGate from "@/components/PhoneGate";
 import BouquetPhoto from "@/components/BouquetPhoto";
 import { CARD_PRICE, COLOR_HEX, COLOR_TAGS, FAMILIES, FLOWERS, OCCASIONS, VASES, VIBES, WRAPS, flowerImg, priceOf, seasonFor, SEASON_LABEL, vaseImg, Stem } from "@/lib/catalog";
 import type { Profile } from "@/lib/suggest";
+import { LoveBadge, useRatings } from "@/lib/ratings";
 
 const toggle = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
@@ -74,6 +75,7 @@ function Builder({ profile, phone, onEdit }: { profile: Profile; phone: string; 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [savedId, setSavedId] = useState<string | null>(null);
+  const stats = useRatings();
 
   useEffect(() => {
     try {
@@ -100,6 +102,7 @@ function Builder({ profile, phone, onEdit }: { profile: Profile; phone: string; 
     setBusy(true); setErr("");
     try {
       const r = await api<{ bouquet: { id: string } }>("/api/bouquets", { method: "POST", body: JSON.stringify({ phone, stems, wrap, vase, card_message: card, occasion }) });
+      markThisVisit(r.bouquet.id);
       setSavedId(r.bouquet.id);
     } catch (x) { setErr((x as Error).message); } finally { setBusy(false); }
   };
@@ -148,9 +151,9 @@ function Builder({ profile, phone, onEdit }: { profile: Profile; phone: string; 
                       {!inSeason && <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] text-soft">off-season</span>}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-2 p-3">
-                    <div className="min-w-0"><p className="truncate text-sm font-semibold">{f.name}</p><p className="text-xs text-soft">₹{f.price} / stem</p></div>
-                    <div className="flex items-center gap-1">
+                  <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0"><p className="text-sm font-semibold leading-tight">{f.name}</p><p className="whitespace-nowrap text-xs text-soft">₹{f.price} / stem</p><LoveBadge stats={stats} stems={[{ id: f.id, qty: 1 }]} className="block !text-[11px]" /></div>
+                    <div className="flex items-center justify-between gap-1 sm:justify-end">
                       <button aria-label={`Remove one ${f.name}`} className="btn btn-ghost !size-8 !p-0" disabled={!q} onClick={() => set(f.id, -1)}>−</button>
                       <span className="w-5 text-center text-sm tabular-nums" aria-live="polite">{q}</span>
                       <button aria-label={`Add one ${f.name}`} className="btn btn-ghost !size-8 !p-0" onClick={() => set(f.id, 1)}>+</button>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Intro from "@/components/Intro";
 import SeasonStrip from "@/components/SeasonStrip";
+import { DeliveryBadge, DeliveryBanner } from "@/components/DeliveryBadge";
 import { GALLERY, galleryImg, galleryPrice } from "@/lib/gallery";
 import { flowerImg } from "@/lib/catalog";
 
@@ -31,11 +32,13 @@ export default function Home() {
             <Image src={galleryImg(hero.id)} alt={hero.title} fill priority sizes="(max-width: 768px) 90vw, 440px" className="object-cover" />
           </div>
           <div className="card absolute -bottom-5 -left-4 flex items-center gap-3 !rounded-2xl p-2.5 pr-4 shadow-lg sm:-left-8">
-            <span className="relative size-12 overflow-hidden rounded-xl"><Image src={flowerImg("peony")} alt="" fill sizes="48px" className="object-cover" /></span>
+            <span className="relative size-12 overflow-hidden rounded-xl"><Image src={flowerImg("peony")} alt="Blush peony" fill sizes="48px" className="object-cover" /></span>
             <div><p className="text-sm font-semibold">{hero.title}</p><p className="text-xs text-soft">from ₹{galleryPrice(hero)}</p></div>
           </div>
         </div>
       </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-8"><DeliveryBanner /></section>
 
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="grid gap-4 md:grid-cols-3">
@@ -59,7 +62,7 @@ export default function Home() {
           {preview.map((g) => (
             <li key={g.id}>
               <Link href="/gallery" className="card group block overflow-hidden !rounded-3xl">
-                <div className="relative aspect-[4/5] overflow-hidden"><Image src={galleryImg(g.id)} alt={g.title} fill sizes="(max-width: 640px) 100vw, 360px" className="object-cover transition duration-700 group-hover:scale-105" /></div>
+                <div className="relative aspect-[4/5] overflow-hidden"><Image src={galleryImg(g.id)} alt={`${g.title}: ${g.blurb}`} fill sizes="(max-width: 640px) 100vw, 360px" className="object-cover transition duration-700 group-hover:scale-105" /><DeliveryBadge className="absolute right-3 top-3" /></div>
                 <div className="flex items-center justify-between p-4"><span className="font-display text-xl">{g.title}</span><span className="text-sm text-soft">₹{galleryPrice(g)}</span></div>
               </Link>
             </li>
